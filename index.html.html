@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>樂健屋 LeJianWu｜標準化SOP系統</title>
+<style>
+  :root{
+    --green-dark:#2f5d3a;
+    --green:#4a8b5c;
+    --green-light:#eaf4ec;
+    --orange:#f0973f;
+    --cream:#fdfaf3;
+    --text:#2c2c2c;
+    --gray:#6b6b6b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;color:var(--text);background:var(--cream);line-height:1.7;}
+  a{text-decoration:none;color:inherit;}
+  img{max-width:100%;display:block;}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 24px;}
+
+  /* Nav */
+  header{position:sticky;top:0;z-index:50;background:rgba(253,250,243,0.95);backdrop-filter:blur(6px);border-bottom:1px solid #e6e0d0;}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:1140px;margin:0 auto;}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;color:var(--green-dark);}
+  .logo-badge{width:36px;height:36px;border-radius:10px;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .nav-links{display:flex;gap:32px;font-size:15px;font-weight:500;}
+  .nav-links a{color:var(--text);opacity:.8;transition:.2s;}
+  .nav-links a:hover{opacity:1;color:var(--green-dark);}
+  .nav-cta{background:var(--orange);color:#fff;padding:10px 20px;border-radius:999px;font-size:14px;font-weight:700;white-space:nowrap;}
+  .burger{display:none;font-size:24px;background:none;border:none;cursor:pointer;}
+
+  /* Hero */
+  .hero{position:relative;padding:90px 24px 100px;background:linear-gradient(160deg,var(--green-light) 0%, var(--cream) 60%);overflow:hidden;}
+  .hero-inner{max-width:1140px;margin:0 auto;display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;}
+  .eyebrow{display:inline-block;background:#fff;border:1px solid var(--green);color:var(--green-dark);font-size:13px;font-weight:700;padding:6px 14px;border-radius:999px;margin-bottom:20px;}
+  .hero h1{font-size:44px;line-height:1.35;font-weight:800;color:var(--green-dark);margin-bottom:20px;}
+  .hero h1 span{color:var(--orange);}
+  .hero p{font-size:16px;color:var(--gray);max-width:480px;margin-bottom:32px;}
+  .btn-row{display:flex;gap:14px;flex-wrap:wrap;}
+  .btn-primary{background:var(--green-dark);color:#fff;padding:14px 28px;border-radius:999px;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(47,93,58,.25);}
+  .btn-secondary{border:2px solid var(--green-dark);color:var(--green-dark);padding:12px 26px;border-radius:999px;font-weight:700;font-size:15px;}
+  .hero-visual{background:#fff;border-radius:24px;padding:28px;box-shadow:0 20px 50px rgba(47,93,58,.12);}
+  .hero-visual .cardline{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px dashed #e2ded1;}
+  .hero-visual .cardline:last-child{border-bottom:none;}
+  .step-num{width:32px;height:32px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .stat-row{display:flex;gap:36px;margin-top:40px;flex-wrap:wrap;}
+  .stat b{display:block;font-size:28px;color:var(--green-dark);}
+  .stat span{font-size:13px;color:var(--gray);}
+
+  section{padding:90px 24px;}
+  .section-head{text-align:center;max-width:640px;margin:0 auto 56px;}
+  .section-head .tag{color:var(--orange);font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;}
+  .section-head h2{font-size:32px;font-weight:800;color:var(--green-dark);margin-top:10px;}
+  .section-head p{color:var(--gray);margin-top:14px;font-size:15px;}
+
+  /* SOP flow */
+  .sop{background:var(--green-light);}
+  .sop-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;}
+  .sop-card{background:#fff;border-radius:18px;padding:28px 24px;box-shadow:0 10px 24px rgba(47,93,58,.06);position:relative;transition:transform .2s;}
+  .sop-card:hover{transform:translateY(-4px);}
+  .sop-card .num{position:absolute;top:-14px;left:24px;background:var(--green-dark);color:#fff;font-weight:800;font-size:13px;padding:5px 12px;border-radius:999px;z-index:2;}
+  .sop-card .step-photo{width:100%;height:120px;object-fit:cover;border-radius:12px;margin-top:8px;margin-bottom:14px;}
+  .sop-card .icon{font-size:26px;margin-bottom:10px;}
+  .sop-card h4{font-size:17px;font-weight:800;color:var(--green-dark);margin-bottom:8px;}
+  .sop-card p{font-size:13.5px;color:var(--gray);}
+
+  /* Quality badges */
+  .quality{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-top:56px;}
+  .badge{text-align:center;width:150px;}
+  .badge .circle{width:76px;height:76px;border-radius:50%;background:#fff;border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px;}
+  .badge span{font-size:13.5px;font-weight:700;color:var(--green-dark);}
+
+  /* Menu / dish SOP lookup */
+  .menu{background:#fff;}
+  .dish-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;}
+  .dish-card{background:var(--green-light);border-radius:18px;padding:22px 18px;text-align:center;cursor:pointer;border:2px solid transparent;transition:.2s;}
+  .dish-card:hover{border-color:var(--green);transform:translateY(-3px);box-shadow:0 12px 24px rgba(47,93,58,.1);}
+  .dish-card .dish-photo{width:100%;height:110px;object-fit:cover;border-radius:12px;margin-bottom:12px;}
+  .dish-card .dish-emoji{font-size:28px;margin-bottom:6px;}
+  .dish-card h4{font-size:15.5px;font-weight:800;color:var(--green-dark);margin-bottom:4px;}
+  .dish-card .cal{font-size:12.5px;color:var(--gray);margin-bottom:10px;}
+  .dish-card .view-sop{display:inline-block;font-size:12.5px;font-weight:700;color:var(--orange);}
+  .menu-hint{text-align:center;color:var(--gray);font-size:13.5px;margin-top:28px;}
+
+  /* Skeleton loading */
+  .skeleton-card{cursor:default;}
+  .skeleton-card:hover{transform:none;box-shadow:none;}
+  .skeleton-block{background:linear-gradient(90deg,#e2ded1 25%,#ece8db 37%,#e2ded1 63%);background-size:400% 100%;animation:skeleton-loading 1.4s ease infinite;border-radius:8px;}
+  .skeleton-photo{width:100%;height:110px;margin-bottom:12px;}
+  .skeleton-line{height:13px;width:70%;margin:0 auto 8px;}
+  .skeleton-line.short{width:45%;margin-bottom:0;}
+  @keyframes skeleton-loading{0%{background-position:100% 50%}100%{background-position:0 50%}}
+
+  /* Modal */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(20,30,20,.55);z-index:100;align-items:center;justify-content:center;padding:24px;}
+  .modal-overlay.active{display:flex;}
+  .modal-box{background:#fff;border-radius:22px;max-width:640px;width:100%;max-height:86vh;overflow-y:auto;padding:32px;position:relative;}
+  .modal-close{position:absolute;top:18px;right:18px;width:34px;height:34px;border-radius:50%;background:var(--green-light);border:none;font-size:18px;cursor:pointer;color:var(--green-dark);z-index:2;}
+  .modal-hero{width:100%;height:190px;object-fit:cover;border-radius:16px;margin-bottom:18px;}
+  .modal-head{display:flex;align-items:center;gap:16px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #eee;}
+  .modal-head .emoji{font-size:36px;}
+  .modal-head h3{font-size:22px;font-weight:800;color:var(--green-dark);}
+  .modal-head .meta{font-size:13px;color:var(--gray);margin-top:4px;}
+  .modal-tag{display:inline-block;background:var(--green-light);color:var(--green-dark);font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;margin-top:14px;margin-bottom:6px;}
+  .modal-box h5{font-size:14.5px;font-weight:800;color:var(--green-dark);margin-top:18px;margin-bottom:8px;}
+  .modal-box ul,.modal-box ol{padding-left:0;font-size:13.5px;color:var(--text);list-style:none;}
+  .modal-box li{margin-bottom:6px;}
+  .modal-box .ingredients{display:flex;flex-wrap:wrap;gap:8px;}
+  .modal-box .ingredients span{background:#f4f1e6;border-radius:999px;padding:5px 12px;font-size:12.5px;color:var(--text);}
+  .modal-box .qc-box{background:var(--green-light);border-radius:12px;padding:14px 16px;margin-top:8px;}
+  .modal-box .qc-box ul{padding-left:20px;list-style:disc;}
+  .step-item{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;}
+  .step-item img{width:72px;height:52px;object-fit:cover;border-radius:8px;flex-shrink:0;}
+  .step-item .step-badge{width:20px;height:20px;border-radius:50%;background:var(--green-dark);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+  .step-item .step-text{font-size:13.5px;color:var(--text);padding-top:1px;}
+
+  footer{background:var(--green-dark);color:#cfe3d2;padding:32px 24px;text-align:center;font-size:13px;}
+  footer b{color:#fff;}
+
+  @media (max-width:860px){
+    .nav-links{display:none;}
+    .hero-inner{grid-template-columns:1fr;}
+    .hero h1{font-size:32px;}
+    .sop-grid{grid-template-columns:1fr 1fr;}
+    .dish-grid{grid-template-columns:1fr 1fr;}
+  }
+  @media (max-width:520px){
+    .sop-grid{grid-template-columns:1fr;}
+    .dish-grid{grid-template-columns:1fr;}
+    .stat-row{gap:20px;}
+    section{padding:64px 20px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <div class="logo"><div class="logo-badge">樂</div>樂健屋 LeJianWu</div>
+    <div class="nav-links">
+      <a href="#sop">SOP標準化系統</a>
+      <a href="#menu">菜單 SOP 查詢</a>
+    </div>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="hero-inner wrap">
+    <div>
+      <span class="eyebrow">健康餐盒 × 標準化作業系統</span>
+      <h1>每一份餐盒，<br>都遵循同一套 <span>SOP 標準</span></h1>
+      <p>樂健屋自 2018 年創立，用一套完整的標準作業流程（SOP），把「健康」與「美味」變成每間門市都能穩定複製的品質保證。從食材挑選到出餐包裝，每一步都有標準、可追溯、可複製。</p>
+      <div class="btn-row">
+        <a href="#sop" class="btn-primary">了解 SOP 系統</a>
+        <a href="#menu" class="btn-secondary">查詢菜色 SOP</a>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><b>2018</b><span>品牌創立年份</span></div>
+        <div class="stat"><b>6+</b><span>間標準化門市</span></div>
+        <div class="stat"><b>100%</b><span>SOP 流程覆蓋</span></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="cardline"><div class="step-num">1</div><div>食材挑選與驗收標準</div></div>
+      <div class="cardline"><div class="step-num">2</div><div>中央廚房統一備料</div></div>
+      <div class="cardline"><div class="step-num">3</div><div>標準化烹調與份量控管</div></div>
+      <div class="cardline"><div class="step-num">4</div><div>品保檢驗與衛生稽核</div></div>
+      <div class="cardline"><div class="step-num">5</div><div>包裝出餐與外送對接</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sop" id="sop">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="tag">Standard Operating Procedure</span>
+      <h2>樂健屋四大崗位 SOP</h2>
+      <p>櫃台、主餐、打菜打飯、烤台，每個崗位都有各自的標準作業流程，確保出餐效率、品質與衛生一致。</p>
+    </div>
+    <div class="sop-grid" id="flowGrid"></div>
+    <div class="quality">
+      <div class="badge"><div class="circle">✅</div><span>食品安全認證</span></div>
+      <div class="badge"><div class="circle">🌡️</div><span>全程溫控紀錄</span></div>
+      <div class="badge"><div class="circle">📑</div><span>可追溯食材來源</span></div>
+      <div class="badge"><div class="circle">🔁</div><span>定期稽核複盤</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="menu" id="menu">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="tag">Menu × SOP Lookup</span>
+      <h2>點選菜色，立即查看該道菜的 SOP</h2>
+      <p>每道菜背後都有專屬的標準作業程序。點一下卡片，就能看到食材、備料、烹調參數與品保檢查點。</p>
+    </div>
+    <div class="dish-grid" id="dishGrid"></div>
+    <p class="menu-hint">範例：點選「椒鹽雞胸」即可查看該道菜完整 SOP 內容 →</p>
+    <p class="menu-hint" id="dataSourceNote" style="margin-top:6px;"></p>
+  </div>
+</section>
+
+<div class="modal-overlay" id="sopModal">
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose">✕</button>
+    <img class="modal-hero" id="mHero" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7" alt="">
+    <div class="modal-head">
+      <div class="emoji" id="mEmoji">🍗</div>
+      <div>
+        <h3 id="mName">椒鹽雞胸</h3>
+        <div class="meta" id="mMeta">分類：主餐 ｜ 熱量：約 220 kcal</div>
+      </div>
+    </div>
+
+    <span class="modal-tag">食材配方</span>
+    <div class="ingredients" id="mIngredients"></div>
+
+    <span class="modal-tag">備料 SOP</span>
+    <ol id="mPrep"></ol>
+
+    <span class="modal-tag">烹調 SOP</span>
+    <ol id="mCook"></ol>
+
+    <span class="modal-tag">品保檢查點</span>
+    <div class="qc-box">
+      <ul id="mQC"></ul>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div><b>樂健屋 LeJianWu</b>｜健康餐盒 × 標準化 SOP 系統</div>
+  <div style="margin-top:8px;">© 2026 LeJianWu. 本頁面為網站設計原型，內容與資訊僅供示意。</div>
+</footer>
+
+<script>
+// ============================================================
+// 「後台」設定：貼上資料來源網址
+// 支援兩種來源，擇一即可，程式會自動判斷格式：
+//  1) Google Apps Script 後台網址（部署後網址記得加 ?action=data）
+//  2) Google Sheet「發布到網路」的 CSV 連結
+// 若留空，網站會使用下面 FALLBACK_DISHES 內建示範資料
+// ============================================================
+const CONFIG = {
+  DATA_API_URL: "https://script.google.com/macros/s/AKfycby1D-K1ITMSz0FE2f9-GwxYZOB0oTj269e3YmJj7bow-i3lCtbJ96pX44YwHScjsB1-/exec?action=data"   // ◀◀◀ 在這裡貼上 Apps Script 網址（加 ?action=data）或 CSV 發布連結
+};
+
+// 產生示意用佔位圖片（沒有填真實圖片網址時的預設圖）
+function photo(label, bg, fg, w, h){
+  return `https://placehold.co/${w}x${h}/${bg}/${fg}?text=${encodeURIComponent(label)}&font=noto-sans`;
+}
+
+// 門市「四大崗位 SOP」總覽卡片的內建示範內容
+// 這組資料現在也能由後台管理（Google Sheet 的「流程總覽」分頁）
+const FALLBACK_FLOW = [
+  { order: 1, title: "櫃台", desc: "負責接待顧客、點餐與結帳，依標準話術問候並確認餐點與備註，保持櫃台環境整潔、健康證明展示於明顯處。", icon: "🧾", image: "", bg: "f5e8f0", fg: "8b3f6b" },
+  { order: 2, title: "主餐", desc: "負責主餐蛋白質料理的烹調與火候掌控，依標準食譜卡執行醃製、烹調時間與溫度，確保每份主餐口味與熟度一致。", icon: "🍗", image: "", bg: "fdf1df", fg: "8b5a2b" },
+  { order: 3, title: "打菜打飯", desc: "負責白飯與配菜的秤重分裝，依標準份量控管每份餐盒的飯量與配菜比例，確保擺盤一致、熱量標示準確。", icon: "🍚", image: "", bg: "dff0e2", fg: "2f5d3a" },
+  { order: 4, title: "烤台", desc: "負責烤台區的食材烘烤作業，依溫度與時間標準執行，並定期清潔烤台，維持食品安全與烘烤品質穩定。", icon: "🔥", image: "", bg: "fbe8df", fg: "d9633b" }
+];
+
+const FALLBACK_DISHES = [
+  {
+    id: "jiaoyan-jixiong",
+    emoji: "🍗",
+    name: "椒鹽雞胸",
+    category: "主餐 ｜ 雞肉類",
+    cal: "約 220 kcal",
+    bg: "fdf1df", fg: "8b5a2b",
+    ingredients: ["雞胸肉 150g", "地瓜粉 15g", "蒜末", "蔥花", "椒鹽粉", "白胡椒", "食用油"],
+    prep: [
+      { label: "逆紋切片", text: "雞胸肉逆紋切片，厚度統一為 0.8–1 公分。" },
+      { label: "醃製入味", text: "以醬油、米酒、白胡椒醃製 20 分鐘，冷藏靜置。" },
+      { label: "裹粉靜置", text: "醃好的雞胸均勻裹上地瓜粉，靜置 5 分鐘讓粉反潮。" }
+    ],
+    cook: [
+      { label: "油炸上色", text: "油溫加熱至 170°C，雞胸下鍋炸 3 分半至金黃酥脆，起鍋瀝油。" },
+      { label: "爆香蒜末", text: "鍋中留少許油，爆香蒜末，倒入炸好的雞胸快速拌炒 30 秒。" },
+      { label: "椒鹽調味", text: "起鍋前均勻撒上椒鹽粉與蔥花，拌勻即可出餐。" }
+    ],
+    qc: [
+      "雞胸中心溫度需達 75°C 以上，確保熟成。",
+      "每份雞胸重量控制在 150g ±5g。",
+      "外觀需呈金黃色，不可有焦黑或未熟粉漿。",
+      "出餐前 5 分鐘內完成裝盒，避免回軟。"
+    ]
+  },
+  {
+    id: "tazhi-jitui",
+    emoji: "🍖",
+    name: "塔香雞腿排",
+    category: "主餐 ｜ 雞肉類",
+    cal: "約 260 kcal",
+    bg: "fbe8df", fg: "b4552b",
+    ingredients: ["去骨雞腿排 160g", "九層塔", "蒜末", "辣椒片", "醬油膏", "米酒"],
+    prep: [
+      { label: "去筋劃刀", text: "雞腿排去除多餘油脂與筋膜，劃刀確保受熱均勻。" },
+      { label: "醃製入味", text: "以醬油、米酒、蒜末醃製 30 分鐘。" },
+      { label: "配料備妥", text: "九層塔洗淨瀝乾備用，辣椒切片備用。" }
+    ],
+    cook: [
+      { label: "雙面煎黃", text: "平底鍋中火將雞腿排煎至雙面金黃，鎖住肉汁。" },
+      { label: "燜煮全熟", text: "轉小火加蓋燜煮 4 分鐘至全熟。" },
+      { label: "塔香快炒", text: "起鍋前放入九層塔與辣椒片快速拌炒 15 秒即可。" }
+    ],
+    qc: [
+      "雞腿排中心溫度需達 75°C 以上。",
+      "煎製面需呈均勻金黃色澤，無生血水滲出。",
+      "九層塔須現炒現放，避免出水影響賣相。"
+    ]
+  },
+  {
+    id: "sanjiao-yu",
+    emoji: "🐟",
+    name: "香煎鮭魚排",
+    category: "主餐 ｜ 海鮮類",
+    cal: "約 280 kcal",
+    bg: "e0f0f5", fg: "2f6b8b",
+    ingredients: ["鮭魚排 140g", "海鹽", "黑胡椒", "檸檬片", "橄欖油"],
+    prep: [
+      { label: "解凍吸乾", text: "鮭魚排解凍後以廚房紙巾吸乾表面水分。" },
+      { label: "鹽味靜置", text: "兩面均勻抹上海鹽與黑胡椒，靜置 10 分鐘入味。" }
+    ],
+    cook: [
+      { label: "煎魚皮面", text: "平底鍋加熱橄欖油，鮭魚皮面朝下先煎 3 分鐘至酥脆。" },
+      { label: "翻面續煎", text: "翻面續煎 2 分鐘，中心保留粉嫩熟度。" },
+      { label: "擺盤出餐", text: "起鍋擺盤，附上檸檬片即可出餐。" }
+    ],
+    qc: [
+      "鮭魚中心溫度需達 63°C 以上（海鮮類安全熟度）。",
+      "魚皮需酥脆不焦，肉質不可過乾。",
+      "當日進貨當日使用，超過保存期限一律下架。"
+    ]
+  },
+  {
+    id: "songban-zhu",
+    emoji: "🥩",
+    name: "蒜香松阪豬",
+    category: "主餐 ｜ 豬肉類",
+    cal: "約 240 kcal",
+    bg: "f5e6e0", fg: "8b3f2b",
+    ingredients: ["松阪豬 150g", "蒜片", "米酒", "醬油", "黑胡椒"],
+    prep: [
+      { label: "切薄片", text: "松阪豬切薄片，以米酒、醬油、黑胡椒醃製 25 分鐘。" },
+      { label: "蒜片備用", text: "蒜片切好備用，避免出水氧化。" }
+    ],
+    cook: [
+      { label: "快炒上色", text: "鍋子燒熱後下豬肉片，中大火快炒至表面上色。" },
+      { label: "蒜片爆香", text: "加入蒜片同炒至香氣釋出，約 1 分鐘。" },
+      { label: "起鍋裝盤", text: "確認全熟後起鍋，避免過度拌炒導致肉質變柴。" }
+    ],
+    qc: [
+      "豬肉需全熟，中心不可有粉紅色澤。",
+      "每份重量控制在 150g ±5g。",
+      "蒜片需呈金黃色，不可焦黑苦味。"
+    ]
+  },
+  {
+    id: "dapo-rou",
+    emoji: "🌶️",
+    name: "打拋豬肉",
+    category: "主餐 ｜ 異國風味",
+    cal: "約 250 kcal",
+    bg: "fbe0df", fg: "b4342b",
+    ingredients: ["豬絞肉 150g", "打拋葉/九層塔", "蒜末", "辣椒", "魚露", "檸檬汁"],
+    prep: [
+      { label: "退冰切碎", text: "豬絞肉退冰完全，蒜末與辣椒切碎備用。" },
+      { label: "葉菜洗淨", text: "打拋葉洗淨瀝乾，去除粗梗。" }
+    ],
+    cook: [
+      { label: "爆香拌炒", text: "熱鍋爆香蒜末與辣椒，加入豬絞肉炒至變色。" },
+      { label: "調味上色", text: "加入魚露調味，炒至肉末全熟上色。" },
+      { label: "拌入九層塔", text: "起鍋前拌入打拋葉與檸檬汁提香即可。" }
+    ],
+    qc: [
+      "絞肉中心溫度需達 75°C 以上。",
+      "鹹度需依標準配方比例，避免過鹹。",
+      "打拋葉需現拌現出餐，避免發黑影響賣相。"
+    ]
+  },
+  {
+    id: "shucai-pin",
+    emoji: "🥦",
+    name: "時蔬拼盤",
+    category: "配菜 ｜ 蔬食類",
+    cal: "約 90 kcal",
+    bg: "eaf4ec", fg: "2f5d3a",
+    ingredients: ["綠花椰", "紅蘿蔔片", "玉米筍", "蒜末", "橄欖油", "海鹽"],
+    prep: [
+      { label: "洗淨切段", text: "蔬菜統一切段、去皮，依標準規格分裝保存。" },
+      { label: "汆燙前備", text: "綠花椰、紅蘿蔔汆燙前確認水量與鍋具清潔。" }
+    ],
+    cook: [
+      { label: "汆燙熟脆", text: "滾水加少許鹽，蔬菜汆燙 90 秒至熟脆。" },
+      { label: "過冷保色", text: "撈起後立即過冷水，保持翠綠色澤與脆度。" },
+      { label: "調味拌勻", text: "起鍋前以橄欖油、蒜末、海鹽輕拌調味。" }
+    ],
+    qc: [
+      "蔬菜色澤需鮮綠，不可過爛出水。",
+      "汆燙時間嚴格控制在 90 秒 ±10 秒。",
+      "出餐前需瀝乾多餘水分，避免餐盒積水。"
+    ]
+  }
+];
+
+// 圖片挑選：Google Sheet 有填真實網址就用真實網址，沒填就用示意佔位圖
+function dishThumb(d){ return (d.image && d.image.trim()) || photo(d.name, d.bg, d.fg, 300, 220); }
+function dishHero(d){ return (d.image && d.image.trim()) || photo(d.name, d.bg, d.fg, 640, 360); }
+function stepImg(s, d){ return (s.img && s.img.trim()) || photo(s.label, d.bg, d.fg, 160, 110); }
+
+// ---- 簡易 CSV 解析（支援欄位內含逗號/換行的雙引號格式）----
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i], next = text[i+1];
+    if(inQuotes){
+      if(c === '"' && next === '"'){ field += '"'; i++; }
+      else if(c === '"'){ inQuotes = false; }
+      else field += c;
+    } else {
+      if(c === '"') inQuotes = true;
+      else if(c === ','){ row.push(field); field = ''; }
+      else if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+      else if(c === '\r'){ /* skip */ }
+      else field += c;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  if(!rows.length) return [];
+  const headers = rows[0].map(h => h.trim());
+  return rows.slice(1).filter(r => r.some(v => v && v.trim())).map(r => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (r[i] || '').trim());
+    return obj;
+  });
+}
+
+function splitField(v){
+  return String(v == null ? '' : v).split('｜').map(s => s.trim()).filter(Boolean);
+}
+
+function rowsToDishes(rows){
+  return rows.map(r => {
+    const prepLabels = splitField(r['備料標籤']);
+    const prepTexts = splitField(r['備料說明']);
+    const prepImgs = splitField(r['備料圖片']);
+    const cookLabels = splitField(r['烹調標籤']);
+    const cookTexts = splitField(r['烹調說明']);
+    const cookImgs = splitField(r['烹調圖片']);
+    return {
+      id: r['id'] || r['名稱'],
+      emoji: r['emoji'] || '🍽️',
+      name: r['名稱'] || '未命名菜色',
+      category: r['分類'] || '',
+      cal: r['熱量'] || '',
+      image: r['主圖網址'] || '',
+      bg: r['主題色底'] || 'eaf4ec',
+      fg: r['主題色字'] || '2f5d3a',
+      ingredients: splitField(r['食材']),
+      prep: prepLabels.map((label, i) => ({ label, text: prepTexts[i] || '', img: prepImgs[i] || '' })),
+      cook: cookLabels.map((label, i) => ({ label, text: cookTexts[i] || '', img: cookImgs[i] || '' })),
+      qc: splitField(r['品保檢查'])
+    };
+  });
+}
+
+// 「流程總覽」列轉成畫面用的物件，依 order 欄位排序
+function rowsToFlow(rows){
+  return rows
+    .map(r => ({
+      order: Number(r['順序']) || 0,
+      title: r['標題'] || '',
+      desc: r['說明'] || '',
+      icon: r['圖示'] || '📋',
+      image: r['圖片網址'] || '',
+      bg: r['主題色底'] || 'eaf4ec',
+      fg: r['主題色字'] || '2f5d3a'
+    }))
+    .filter(f => f.title)
+    .sort((a, b) => a.order - b.order);
+}
+
+// ---- 帶逾時保護的 fetch：避免 Google 回應太慢時網頁卡住 ----
+// 自動判斷資料格式：Apps Script 回傳 {dishes, flow} 物件，CSV 發布連結回傳純文字（只有菜色資料）
+async function fetchBackendData(timeoutMs){
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try{
+    const res = await fetch(CONFIG.DATA_API_URL, { signal: controller.signal, cache: 'no-store' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    let dishRows, flowRows = null;
+    try{
+      const json = JSON.parse(text);
+      if(Array.isArray(json)){
+        dishRows = json;
+      } else {
+        dishRows = json.dishes || json.data || [];
+        flowRows = json.flow || null;
+      }
+    }catch(e){
+      dishRows = parseCSV(text);
+    }
+    const dishes = rowsToDishes(dishRows);
+    const flow = flowRows ? rowsToFlow(flowRows) : null;
+    if(!dishes.length) throw new Error('資料是空的');
+    return { dishes, flow: (flow && flow.length) ? flow : null };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ---- 本機快取：先秒開快取資料，背景再偷偷更新，體感更順 ----
+const CACHE_KEY = 'lejianwu_sheet_cache_v2';
+function readCache(){
+  try{
+    const raw = localStorage.getItem(CACHE_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed || !Array.isArray(parsed.dishes) || !parsed.dishes.length) return null;
+    return { dishes: parsed.dishes, flow: (Array.isArray(parsed.flow) && parsed.flow.length) ? parsed.flow : null };
+  }catch(e){ return null; }
+}
+function writeCache(dishes, flow){
+  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), dishes, flow })); }catch(e){}
+}
+
+const grid = document.getElementById('dishGrid');
+const flowGrid = document.getElementById('flowGrid');
+
+function buildFlowGrid(flow){
+  flowGrid.innerHTML = '';
+  flow.forEach((f, i) => {
+    const card = document.createElement('div');
+    card.className = 'sop-card';
+    card.innerHTML = `
+      <div class="num">STEP ${String(i + 1).padStart(2, '0')}</div>
+      <img class="step-photo" src="${(f.image && f.image.trim()) || photo(f.title, f.bg, f.fg, 400, 260)}" alt="${f.title} 示意圖">
+      <div class="icon">${f.icon}</div><h4>${f.title}</h4><p>${f.desc}</p>
+    `;
+    flowGrid.appendChild(card);
+  });
+}
+
+function buildSkeleton(count){
+  grid.innerHTML = '';
+  for(let i = 0; i < count; i++){
+    const card = document.createElement('div');
+    card.className = 'dish-card skeleton-card';
+    card.innerHTML = `
+      <div class="skeleton-block skeleton-photo"></div>
+      <div class="skeleton-block skeleton-line"></div>
+      <div class="skeleton-block skeleton-line short"></div>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+function buildGrid(dishes){
+  grid.innerHTML = '';
+  dishes.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'dish-card';
+    card.innerHTML = `
+      <img class="dish-photo" src="${dishThumb(d)}" alt="${d.name} 成品示意圖">
+      <div class="dish-emoji">${d.emoji}</div>
+      <h4>${d.name}</h4>
+      <div class="cal">${d.cal}</div>
+      <span class="view-sop">查看 SOP →</span>
+    `;
+    card.addEventListener('click', () => openModal(d));
+    grid.appendChild(card);
+  });
+}
+
+const modal = document.getElementById('sopModal');
+function stepListHTML(steps, d){
+  return steps.map((s, i) => `
+    <li class="step-item">
+      <img src="${stepImg(s, d)}" alt="${s.label} 示意圖">
+      <div class="step-badge">${i + 1}</div>
+      <div class="step-text">${s.text}</div>
+    </li>
+  `).join('');
+}
+function openModal(d){
+  document.getElementById('mHero').src = dishHero(d);
+  document.getElementById('mHero').alt = `${d.name} 成品示意圖`;
+  document.getElementById('mEmoji').textContent = d.emoji;
+  document.getElementById('mName').textContent = d.name;
+  document.getElementById('mMeta').textContent = `分類：${d.category} ｜ 熱量：${d.cal}`;
+  document.getElementById('mIngredients').innerHTML = d.ingredients.map(i=>`<span>${i}</span>`).join('');
+  document.getElementById('mPrep').innerHTML = stepListHTML(d.prep, d);
+  document.getElementById('mCook').innerHTML = stepListHTML(d.cook, d);
+  document.getElementById('mQC').innerHTML = d.qc.map(i=>`<li>${i}</li>`).join('');
+  modal.classList.add('active');
+}
+document.getElementById('modalClose').addEventListener('click', ()=> modal.classList.remove('active'));
+modal.addEventListener('click', (e)=>{ if(e.target === modal) modal.classList.remove('active'); });
+document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') modal.classList.remove('active'); });
+
+async function init(){
+  const note = document.getElementById('dataSourceNote');
+  buildFlowGrid(FALLBACK_FLOW); // 先顯示預設六大流程，避免畫面空白
+
+  if(!CONFIG.DATA_API_URL){
+    note.textContent = '目前顯示內建示範資料（尚未連接後台）';
+    buildGrid(FALLBACK_DISHES);
+    return;
+  }
+
+  const cached = readCache();
+  if(cached){
+    buildGrid(cached.dishes);
+    if(cached.flow) buildFlowGrid(cached.flow);
+    note.textContent = '顯示快取資料，背景更新中…';
+  } else {
+    buildSkeleton(6);
+    note.textContent = '正在載入菜單資料…';
+  }
+
+  try{
+    const fresh = await fetchBackendData(6000);
+    writeCache(fresh.dishes, fresh.flow);
+    buildGrid(fresh.dishes);
+    buildFlowGrid(fresh.flow || FALLBACK_FLOW);
+    note.textContent = '資料已從後台同步（共 ' + fresh.dishes.length + ' 道菜' + (fresh.flow ? '，流程總覽已同步' : '') + '）';
+  }catch(err){
+    console.warn('讀取後台失敗：', err);
+    if(cached){
+      note.textContent = '更新失敗，目前顯示快取資料';
+    } else {
+      buildGrid(FALLBACK_DISHES);
+      note.textContent = '讀取後台失敗或逾時，暫時顯示內建示範資料';
+    }
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>
