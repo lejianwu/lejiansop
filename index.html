@@ -85,6 +85,10 @@
   .dish-card .cal{font-size:12.5px;color:var(--gray);margin-bottom:10px;}
   .dish-card .view-sop{display:inline-block;font-size:12.5px;font-weight:700;color:var(--orange);}
   .menu-hint{text-align:center;color:var(--gray);font-size:13.5px;margin-top:28px;}
+  .menu-group{margin-bottom:44px;}
+  .menu-group:last-of-type{margin-bottom:0;}
+  .menu-group-title{display:flex;align-items:center;gap:12px;font-size:19px;font-weight:800;color:var(--green-dark);margin-bottom:20px;}
+  .menu-group-title::after{content:"";flex:1;height:1px;background:#e2ded1;}
 
   /* Skeleton loading */
   .skeleton-card{cursor:default;}
@@ -357,7 +361,14 @@ document.getElementById('storeLogout').addEventListener('click', () => {
       <h2>點選菜色，立即查看該道菜的 SOP</h2>
       <p>每道菜背後都有專屬的標準作業程序。點一下卡片，就能看到食材、備料、烹調參數與品保檢查點。</p>
     </div>
-    <div class="dish-grid" id="dishGrid"></div>
+    <div class="menu-group" id="mainDishGroup">
+      <h3 class="menu-group-title">🍗 主餐 SOP</h3>
+      <div class="dish-grid" id="dishGridMain"></div>
+    </div>
+    <div class="menu-group" id="sideDishGroup">
+      <h3 class="menu-group-title">🥦 配菜 SOP</h3>
+      <div class="dish-grid" id="dishGridSide"></div>
+    </div>
     <p class="menu-hint">範例：點選「椒鹽雞胸」即可查看該道菜完整 SOP 內容 →</p>
     <p class="menu-hint" id="dataSourceNote" style="margin-top:6px;"></p>
   </div>
@@ -752,7 +763,16 @@ function writeCache(dishes, flow){
   try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), dishes, flow })); }catch(e){}
 }
 
-const grid = document.getElementById('dishGrid');
+const gridMain = document.getElementById('dishGridMain');
+const gridSide = document.getElementById('dishGridSide');
+const mainDishGroup = document.getElementById('mainDishGroup');
+const sideDishGroup = document.getElementById('sideDishGroup');
+
+// 依「分類」欄位判斷這道菜要放進「主餐 SOP」還是「配菜 SOP」，欄位裡只要包含
+// 「配菜」兩個字就歸類到配菜區，其餘（含沒填分類的）一律算主餐區
+function isSideDish(d){
+  return String(d.category || '').includes('配菜');
+}
 const flowGrid = document.getElementById('flowGrid');
 
 function buildFlowGrid(flow){
@@ -772,35 +792,49 @@ function buildFlowGrid(flow){
   });
 }
 
-function buildSkeleton(count){
-  grid.innerHTML = '';
-  for(let i = 0; i < count; i++){
-    const card = document.createElement('div');
-    card.className = 'dish-card skeleton-card';
-    card.innerHTML = `
-      <div class="skeleton-block skeleton-photo"></div>
-      <div class="skeleton-block skeleton-line"></div>
-      <div class="skeleton-block skeleton-line short"></div>
-    `;
-    grid.appendChild(card);
-  }
+function skeletonCard(){
+  const card = document.createElement('div');
+  card.className = 'dish-card skeleton-card';
+  card.innerHTML = `
+    <div class="skeleton-block skeleton-photo"></div>
+    <div class="skeleton-block skeleton-line"></div>
+    <div class="skeleton-block skeleton-line short"></div>
+  `;
+  return card;
 }
 
+function buildSkeleton(count){
+  gridMain.innerHTML = '';
+  gridSide.innerHTML = '';
+  mainDishGroup.style.display = '';
+  sideDishGroup.style.display = '';
+  for(let i = 0; i < count; i++) gridMain.appendChild(skeletonCard());
+}
+
+function dishCard(d){
+  const card = document.createElement('div');
+  card.className = 'dish-card';
+  card.innerHTML = `
+    <img class="dish-photo" src="${dishThumb(d)}" alt="${d.name} 成品示意圖">
+    <div class="dish-emoji">${d.emoji}</div>
+    <h4>${d.name}</h4>
+    <div class="cal">${d.cal}</div>
+    <span class="view-sop">查看 SOP →</span>
+  `;
+  card.addEventListener('click', () => openModal(d));
+  return card;
+}
+
+// 依分類把菜色分成「主餐 SOP」「配菜 SOP」兩組各自的格子牆，哪一組沒有菜色就整區隱藏
 function buildGrid(dishes){
-  grid.innerHTML = '';
-  dishes.forEach(d => {
-    const card = document.createElement('div');
-    card.className = 'dish-card';
-    card.innerHTML = `
-      <img class="dish-photo" src="${dishThumb(d)}" alt="${d.name} 成品示意圖">
-      <div class="dish-emoji">${d.emoji}</div>
-      <h4>${d.name}</h4>
-      <div class="cal">${d.cal}</div>
-      <span class="view-sop">查看 SOP →</span>
-    `;
-    card.addEventListener('click', () => openModal(d));
-    grid.appendChild(card);
-  });
+  gridMain.innerHTML = '';
+  gridSide.innerHTML = '';
+  const mains = dishes.filter(d => !isSideDish(d));
+  const sides = dishes.filter(d => isSideDish(d));
+  mains.forEach(d => gridMain.appendChild(dishCard(d)));
+  sides.forEach(d => gridSide.appendChild(dishCard(d)));
+  mainDishGroup.style.display = mains.length ? '' : 'none';
+  sideDishGroup.style.display = sides.length ? '' : 'none';
 }
 
 const modal = document.getElementById('sopModal');
