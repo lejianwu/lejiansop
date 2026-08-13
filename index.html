@@ -59,8 +59,9 @@
   /* SOP flow */
   .sop{background:var(--green-light);}
   .sop-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;}
-  .sop-card{background:#fff;border-radius:18px;padding:28px 24px;box-shadow:0 10px 24px rgba(47,93,58,.06);position:relative;transition:transform .2s;}
-  .sop-card:hover{transform:translateY(-4px);}
+  .sop-card{background:#fff;border-radius:18px;padding:28px 24px;box-shadow:0 10px 24px rgba(47,93,58,.06);position:relative;transition:transform .2s;cursor:pointer;}
+  .sop-card:hover{transform:translateY(-4px);box-shadow:0 16px 32px rgba(47,93,58,.12);}
+  .sop-card .view-sop{display:inline-block;margin-top:10px;font-size:12.5px;font-weight:700;color:var(--orange);}
   .sop-card .num{position:absolute;top:-14px;left:24px;background:var(--green-dark);color:#fff;font-weight:800;font-size:13px;padding:5px 12px;border-radius:999px;z-index:2;}
   .sop-card .step-photo{width:100%;height:120px;object-fit:cover;border-radius:12px;margin-top:8px;margin-bottom:14px;}
   .sop-card .icon{font-size:26px;margin-bottom:10px;}
@@ -117,6 +118,16 @@
   .step-item .step-badge{width:20px;height:20px;border-radius:50%;background:var(--green-dark);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
   .step-item .step-text{font-size:13.5px;color:var(--text);padding-top:1px;}
 
+  /* 崗位 SOP 詳細表格（彈窗內） */
+  .flow-table-wrap{overflow-x:auto;margin-bottom:8px;}
+  .flow-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:460px;}
+  .flow-table th,.flow-table td{border:1px solid #e6e0d0;padding:8px 10px;text-align:left;vertical-align:top;}
+  .flow-table th{background:var(--green-light);color:var(--green-dark);font-weight:800;font-size:12px;white-space:nowrap;}
+  .flow-table td:first-child{text-align:center;color:var(--gray);white-space:nowrap;}
+  .flow-table td.step-check{text-align:center;font-size:15px;color:var(--green);}
+  .flow-list{padding-left:20px;list-style:disc;font-size:13.5px;color:var(--text);margin-bottom:4px;}
+  .flow-list li{margin-bottom:6px;}
+
   footer{background:var(--green-dark);color:#cfe3d2;padding:32px 24px;text-align:center;font-size:13px;}
   footer b{color:#fff;}
 
@@ -133,9 +144,154 @@
     .stat-row{gap:20px;}
     section{padding:64px 20px;}
   }
+
+  /* 網頁密碼鎖 */
+  #siteLock{position:fixed;inset:0;z-index:999;background:var(--green-dark);display:flex;align-items:center;justify-content:center;padding:24px;}
+  #siteLock.unlocked{display:none;}
+  .lock-box{background:#fff;border-radius:20px;padding:40px 32px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.25);}
+  .lock-box .lock-badge{width:52px;height:52px;border-radius:50%;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 16px;}
+  .lock-box h2{color:var(--green-dark);font-size:18px;font-weight:800;margin-bottom:8px;}
+  .lock-box p{color:var(--gray);font-size:13px;margin-bottom:20px;}
+  .lock-box input{width:100%;padding:12px 14px;border:1px solid #d9d2bd;border-radius:10px;font-size:15px;text-align:center;margin-bottom:12px;box-sizing:border-box;}
+  .lock-box button{width:100%;background:var(--orange);color:#fff;border:none;padding:12px;border-radius:999px;font-weight:800;font-size:14.5px;cursor:pointer;}
+  .lock-box .lock-error{color:#b4342b;font-size:12.5px;margin-top:10px;min-height:16px;}
+  body.locked > *:not(#siteLock){display:none;}
+  .store-badge{position:fixed;top:10px;right:14px;z-index:200;background:#fff;border:1px solid #e2ded1;border-radius:999px;padding:6px 14px;font-size:12.5px;color:var(--green-dark);font-weight:700;box-shadow:0 6px 16px rgba(0,0,0,.08);display:none;align-items:center;gap:10px;}
+  .store-badge.show{display:flex;}
+  .store-badge button{background:none;border:none;color:var(--gray);font-size:12px;cursor:pointer;text-decoration:underline;font-weight:500;padding:0;}
 </style>
 </head>
-<body>
+<body class="locked">
+
+<div id="siteLock">
+  <div class="lock-box">
+    <div class="lock-badge">🔒</div>
+    <h2>樂健屋 SOP 內部資料</h2>
+    <p>這個網站僅供加盟門市查閱，請輸入你的帳號密碼。</p>
+    <input type="text" id="lockUser" placeholder="帳號" autocomplete="off">
+    <input type="password" id="lockInput" placeholder="請輸入密碼" autocomplete="off">
+    <button type="button" id="lockSubmit">進入網站</button>
+    <div class="lock-error" id="lockError"></div>
+  </div>
+</div>
+
+<div class="store-badge" id="storeBadge">
+  <span id="storeBadgeName"></span>
+  <button type="button" id="storeLogout">登出</button>
+</div>
+
+<script>
+// ============================================================
+// 網頁密碼鎖（一店一組帳號密碼，帳號存在 Google Sheet「門市帳號」分頁）
+// 門市帳號現在改到 Apps Script 後台管理頁面新增／刪除（後台的「③ 門市帳號
+// 管理」那一區），不用再改這個檔案、也不用重新上傳 GitHub。
+// 這裡只是把使用者輸入的帳密送到 Apps Script 去比對是否正確。
+// ============================================================
+const LOCK_KEY = 'lejianwu_site_unlocked_v2';
+
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// CONFIG 是在下面第二個 <script> 裡定義的，這裡只在函式「被呼叫的當下」才去讀，
+// 不會在這個檔案一開頭就讀（那時候 CONFIG 還沒宣告），所以沒有先後順序問題
+function apiBase(){
+  return (typeof CONFIG !== 'undefined' && CONFIG.DATA_API_URL) ? CONFIG.DATA_API_URL.split('?')[0] : '';
+}
+
+async function verifyLogin(user, hash){
+  const url = apiBase();
+  if(!url) return { ok: false, offline: true };
+  try{
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },  // 用 text/plain 避開瀏覽器的 CORS 預檢請求
+      body: JSON.stringify({ action: 'login', user, hash })
+    });
+    const data = await res.json();
+    return { ok: !!(data && data.ok), name: data && data.name };  // name 是門市中文顯示名稱
+  }catch(e){
+    return { ok: false, offline: true };  // 連不上後台，不代表帳密錯誤
+  }
+}
+
+function showStoreBadge(displayName){
+  const badge = document.getElementById('storeBadge');
+  document.getElementById('storeBadgeName').textContent = '登入門市：' + displayName;
+  badge.classList.add('show');
+}
+
+function unlockSite(displayName){
+  document.body.classList.remove('locked');
+  document.getElementById('siteLock').classList.add('unlocked');
+  if(displayName) showStoreBadge(displayName);
+}
+
+function relockSite(){
+  document.body.classList.add('locked');
+  document.getElementById('siteLock').classList.remove('unlocked');
+  document.getElementById('storeBadge').classList.remove('show');
+}
+
+const lockUser = document.getElementById('lockUser');
+const lockInput = document.getElementById('lockInput');
+const lockError = document.getElementById('lockError');
+const lockSubmit = document.getElementById('lockSubmit');
+
+window.addEventListener('DOMContentLoaded', async () => {
+  if(!apiBase()){ unlockSite(); return; }  // 還沒設定後台網址，先不鎖，方便測試畫面
+
+  let saved = null;
+  try{ saved = JSON.parse(localStorage.getItem(LOCK_KEY) || 'null'); }catch(e){}
+  if(!saved) return;  // 這台裝置沒登入過，維持鎖住畫面等輸入
+
+  unlockSite(saved.name || saved.user);  // 先用快取樂觀解鎖，畫面不用卡著等網路
+  const result = await verifyLogin(saved.user, saved.hash);
+  if(result.ok){
+    // 門市名稱可能被你在後台改過，順便更新快取跟畫面上顯示的名稱
+    if(result.name && result.name !== saved.name){
+      localStorage.setItem(LOCK_KEY, JSON.stringify({ user: saved.user, hash: saved.hash, name: result.name }));
+      showStoreBadge(result.name);
+    }
+  } else if(!result.offline){
+    // 後台明確說這組帳密已經失效（門市被刪除或密碼被你改掉），重新鎖上
+    localStorage.removeItem(LOCK_KEY);
+    relockSite();
+  }
+});
+
+async function tryUnlock(){
+  const user = lockUser.value.trim();
+  if(!user){ lockError.textContent = '請輸入帳號'; return; }
+  if(!lockInput.value){ lockError.textContent = '請輸入密碼'; return; }
+  lockSubmit.disabled = true;
+  lockSubmit.textContent = '確認中…';
+  lockError.textContent = '';
+  const hash = await sha256Hex(lockInput.value);
+  const result = await verifyLogin(user, hash);
+  lockSubmit.disabled = false;
+  lockSubmit.textContent = '進入網站';
+  if(result.ok){
+    const displayName = result.name || user;
+    localStorage.setItem(LOCK_KEY, JSON.stringify({ user, hash, name: displayName }));
+    unlockSite(displayName);
+  } else if(result.offline){
+    lockError.textContent = '無法連線到後台，請檢查網路後再試一次';
+  } else {
+    lockError.textContent = '帳號或密碼不對，再試一次';
+    lockInput.value = '';
+    lockInput.focus();
+  }
+}
+lockSubmit.addEventListener('click', tryUnlock);
+lockInput.addEventListener('keydown', e => { if(e.key === 'Enter') tryUnlock(); });
+lockUser.addEventListener('keydown', e => { if(e.key === 'Enter') lockInput.focus(); });
+document.getElementById('storeLogout').addEventListener('click', () => {
+  localStorage.removeItem(LOCK_KEY);
+  location.reload();
+});
+</script>
 
 <header>
   <nav>
@@ -231,6 +387,35 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="flowModal">
+  <div class="modal-box">
+    <button class="modal-close" id="flowModalClose">✕</button>
+    <div class="modal-head">
+      <div class="emoji" id="fmIcon">🧾</div>
+      <div>
+        <h3 id="fmTitle">櫃台</h3>
+        <div class="meta" id="fmDesc"></div>
+      </div>
+    </div>
+
+    <span class="modal-tag" id="fmStepsTag" style="display:none;">標準作業流程</span>
+    <div class="flow-table-wrap" id="fmStepsWrap" style="display:none;">
+      <table class="flow-table">
+        <thead><tr><th>步驟</th><th>時間點</th><th>說明</th><th>注意事項</th><th>檢核</th></tr></thead>
+        <tbody id="fmStepsBody"></tbody>
+      </table>
+    </div>
+
+    <span class="modal-tag" id="fmPrepTag" style="display:none;">製作要領</span>
+    <ul class="flow-list" id="fmPrepList" style="display:none;"></ul>
+
+    <span class="modal-tag" id="fmWarnTag" style="display:none;">注意事項</span>
+    <div class="qc-box" id="fmWarnBox" style="display:none;">
+      <ul id="fmWarnList"></ul>
+    </div>
+  </div>
+</div>
+
 <footer>
   <div><b>樂健屋 LeJianWu</b>｜健康餐盒 × 標準化 SOP 系統</div>
   <div style="margin-top:8px;">© 2026 LeJianWu. 本頁面為網站設計原型，內容與資訊僅供示意。</div>
@@ -256,10 +441,17 @@ function photo(label, bg, fg, w, h){
 // 門市「四大崗位 SOP」總覽卡片的內建示範內容
 // 這組資料現在也能由後台管理（Google Sheet 的「流程總覽」分頁）
 const FALLBACK_FLOW = [
-  { order: 1, title: "櫃台", desc: "負責接待顧客、點餐與結帳，依標準話術問候並確認餐點與備註，保持櫃台環境整潔、健康證明展示於明顯處。", icon: "🧾", image: "", bg: "f5e8f0", fg: "8b3f6b" },
-  { order: 2, title: "主餐", desc: "負責主餐蛋白質料理的烹調與火候掌控，依標準食譜卡執行醃製、烹調時間與溫度，確保每份主餐口味與熟度一致。", icon: "🍗", image: "", bg: "fdf1df", fg: "8b5a2b" },
-  { order: 3, title: "打菜打飯", desc: "負責白飯與配菜的秤重分裝，依標準份量控管每份餐盒的飯量與配菜比例，確保擺盤一致、熱量標示準確。", icon: "🍚", image: "", bg: "dff0e2", fg: "2f5d3a" },
-  { order: 4, title: "烤台", desc: "負責烤台區的食材烘烤作業，依溫度與時間標準執行，並定期清潔烤台，維持食品安全與烘烤品質穩定。", icon: "🔥", image: "", bg: "fbe8df", fg: "d9633b" }
+  { order: 1, title: "櫃台", desc: "負責接待顧客、點餐與結帳，依標準話術問候並確認餐點與備註，保持櫃台環境整潔、健康證明展示於明顯處。", icon: "🧾", image: "", bg: "f5e8f0", fg: "8b3f6b",
+    steps: [
+      { time: "9:00-9:05", desc: "打卡、更換制服、配戴口罩、髮網手套，確認外送訂單", note: "個人衛生符合規範" },
+      { time: "9:05-9:50", desc: "包雞胸、洗雞腿、滷雞腿", note: "檢查保存溫度、外觀、手部衛生" }
+    ],
+    prepNotes: ["包雞胸：500g/包", "舒肥雞胸：500g/包", "洗雞腿：去除血塊、雞毛"],
+    warnings: ["櫃台人員應隨時注意LINE訂餐、外送訊息（3分鐘內回覆）", "如有外送，確認外送訂單及備妥零錢和收據給外送員"]
+  },
+  { order: 2, title: "主餐", desc: "負責主餐蛋白質料理的烹調與火候掌控，依標準食譜卡執行醃製、烹調時間與溫度，確保每份主餐口味與熟度一致。", icon: "🍗", image: "", bg: "fdf1df", fg: "8b5a2b", steps: [], prepNotes: [], warnings: [] },
+  { order: 3, title: "打菜打飯", desc: "負責白飯與配菜的秤重分裝，依標準份量控管每份餐盒的飯量與配菜比例，確保擺盤一致、熱量標示準確。", icon: "🍚", image: "", bg: "dff0e2", fg: "2f5d3a", steps: [], prepNotes: [], warnings: [] },
+  { order: 4, title: "烤台", desc: "負責烤台區的食材烘烤作業，依溫度與時間標準執行，並定期清潔烤台，維持食品安全與烘烤品質穩定。", icon: "🔥", image: "", bg: "fbe8df", fg: "d9633b", steps: [], prepNotes: [], warnings: [] }
 ];
 
 const FALLBACK_DISHES = [
@@ -442,6 +634,12 @@ function parseCSV(text){
 function splitField(v){
   return String(v == null ? '' : v).split('｜').map(s => s.trim()).filter(Boolean);
 }
+// 專門給「平行欄位」用（例如步驟時間／說明／注意事項，第 N 項要對得上第 N 項）：
+// 不能把空字串濾掉，不然某一步驟少填某欄位時，後面的項目全部會錯位
+function splitFieldKeep(v){
+  if(v == null || v === '') return [];
+  return String(v).split('｜').map(s => s.trim());
+}
 
 function rowsToDishes(rows){
   return rows.map(r => {
@@ -469,17 +667,32 @@ function rowsToDishes(rows){
 }
 
 // 「流程總覽」列轉成畫面用的物件，依 order 欄位排序
+// 步驟時間／步驟說明／步驟注意事項 三欄用「｜」分隔，第 N 個時間對應第 N 個說明、第 N 個注意事項，
+// 湊成一整排「標準作業流程」表格；製作要領／綜合注意事項則是各自獨立的條列清單
 function rowsToFlow(rows){
   return rows
-    .map(r => ({
-      order: Number(r['順序']) || 0,
-      title: r['標題'] || '',
-      desc: r['說明'] || '',
-      icon: r['圖示'] || '📋',
-      image: r['圖片網址'] || '',
-      bg: r['主題色底'] || 'eaf4ec',
-      fg: r['主題色字'] || '2f5d3a'
-    }))
+    .map(r => {
+      const stepTimes = splitFieldKeep(r['步驟時間']);
+      const stepDescs = splitFieldKeep(r['步驟說明']);
+      const stepNotes = splitFieldKeep(r['步驟注意事項']);
+      const stepCount = Math.max(stepTimes.length, stepDescs.length, stepNotes.length);
+      const steps = [];
+      for(let i = 0; i < stepCount; i++){
+        steps.push({ time: stepTimes[i] || '', desc: stepDescs[i] || '', note: stepNotes[i] || '' });
+      }
+      return {
+        order: Number(r['順序']) || 0,
+        title: r['標題'] || '',
+        desc: r['說明'] || '',
+        icon: r['圖示'] || '📋',
+        image: r['圖片網址'] || '',
+        bg: r['主題色底'] || 'eaf4ec',
+        fg: r['主題色字'] || '2f5d3a',
+        steps,
+        prepNotes: splitField(r['製作要領']),
+        warnings: splitField(r['綜合注意事項'])
+      };
+    })
     .filter(f => f.title)
     .sort((a, b) => a.order - b.order);
 }
@@ -537,11 +750,14 @@ function buildFlowGrid(flow){
   flow.forEach((f, i) => {
     const card = document.createElement('div');
     card.className = 'sop-card';
+    const hasDetail = (f.steps && f.steps.length) || (f.prepNotes && f.prepNotes.length) || (f.warnings && f.warnings.length);
     card.innerHTML = `
       <div class="num">STEP ${String(i + 1).padStart(2, '0')}</div>
       <img class="step-photo" src="${(f.image && f.image.trim()) || photo(f.title, f.bg, f.fg, 400, 260)}" alt="${f.title} 示意圖">
       <div class="icon">${f.icon}</div><h4>${f.title}</h4><p>${f.desc}</p>
+      ${hasDetail ? '<span class="view-sop">查看完整 SOP →</span>' : ''}
     `;
+    card.addEventListener('click', () => openFlowModal(f));
     flowGrid.appendChild(card);
   });
 }
@@ -601,7 +817,55 @@ function openModal(d){
 }
 document.getElementById('modalClose').addEventListener('click', ()=> modal.classList.remove('active'));
 modal.addEventListener('click', (e)=>{ if(e.target === modal) modal.classList.remove('active'); });
-document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') modal.classList.remove('active'); });
+
+// ---- 崗位 SOP 詳細彈窗（點崗位卡片跳出時間表、製作要領、注意事項） ----
+const flowModal = document.getElementById('flowModal');
+function openFlowModal(f){
+  document.getElementById('fmIcon').textContent = f.icon;
+  document.getElementById('fmTitle').textContent = f.title;
+  document.getElementById('fmDesc').textContent = f.desc;
+
+  const stepsTag = document.getElementById('fmStepsTag');
+  const stepsWrap = document.getElementById('fmStepsWrap');
+  const stepsBody = document.getElementById('fmStepsBody');
+  const hasSteps = f.steps && f.steps.length;
+  stepsBody.innerHTML = hasSteps ? f.steps.map((s, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${s.time || ''}</td>
+      <td>${s.desc || ''}</td>
+      <td>${s.note || ''}</td>
+      <td class="step-check">☐</td>
+    </tr>
+  `).join('') : '';
+  stepsTag.style.display = hasSteps ? '' : 'none';
+  stepsWrap.style.display = hasSteps ? '' : 'none';
+
+  const prepTag = document.getElementById('fmPrepTag');
+  const prepList = document.getElementById('fmPrepList');
+  const hasPrep = f.prepNotes && f.prepNotes.length;
+  prepList.innerHTML = hasPrep ? f.prepNotes.map(p => `<li>${p}</li>`).join('') : '';
+  prepTag.style.display = hasPrep ? '' : 'none';
+  prepList.style.display = hasPrep ? '' : 'none';
+
+  const warnTag = document.getElementById('fmWarnTag');
+  const warnBox = document.getElementById('fmWarnBox');
+  const warnList = document.getElementById('fmWarnList');
+  const hasWarn = f.warnings && f.warnings.length;
+  warnList.innerHTML = hasWarn ? f.warnings.map(w => `<li>${w}</li>`).join('') : '';
+  warnTag.style.display = hasWarn ? '' : 'none';
+  warnBox.style.display = hasWarn ? '' : 'none';
+
+  flowModal.classList.add('active');
+}
+document.getElementById('flowModalClose').addEventListener('click', () => flowModal.classList.remove('active'));
+flowModal.addEventListener('click', (e) => { if(e.target === flowModal) flowModal.classList.remove('active'); });
+
+document.addEventListener('keydown', (e)=>{
+  if(e.key !== 'Escape') return;
+  modal.classList.remove('active');
+  flowModal.classList.remove('active');
+});
 
 async function init(){
   const note = document.getElementById('dataSourceNote');
