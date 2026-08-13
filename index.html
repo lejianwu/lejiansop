@@ -118,6 +118,10 @@
   .step-item .step-badge{width:20px;height:20px;border-radius:50%;background:var(--green-dark);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
   .step-item .step-text{font-size:13.5px;color:var(--text);padding-top:1px;}
 
+  /* 菜色示範影片 */
+  .video-wrap{position:relative;width:100%;padding-top:56.25%;border-radius:16px;overflow:hidden;margin-top:8px;margin-bottom:6px;background:#000;}
+  .video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+
   /* 崗位 SOP 詳細表格（彈窗內） */
   .flow-table-wrap{overflow-x:auto;margin-bottom:8px;}
   .flow-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:460px;}
@@ -369,6 +373,11 @@ document.getElementById('storeLogout').addEventListener('click', () => {
         <h3 id="mName">椒鹽雞胸</h3>
         <div class="meta" id="mMeta">分類：主餐 ｜ 熱量：約 220 kcal</div>
       </div>
+    </div>
+
+    <span class="modal-tag" id="mVideoTag" style="display:none;">示範影片</span>
+    <div class="video-wrap" id="mVideoWrap" style="display:none;">
+      <iframe id="mVideoFrame" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
     </div>
 
     <span class="modal-tag">食材配方</span>
@@ -661,7 +670,8 @@ function rowsToDishes(rows){
       ingredients: splitField(r['食材']),
       prep: prepLabels.map((label, i) => ({ label, text: prepTexts[i] || '', img: prepImgs[i] || '' })),
       cook: cookLabels.map((label, i) => ({ label, text: cookTexts[i] || '', img: cookImgs[i] || '' })),
-      qc: splitField(r['品保檢查'])
+      qc: splitField(r['品保檢查']),
+      video: r['影片網址'] || ''
     };
   });
 }
@@ -809,14 +819,33 @@ function openModal(d){
   document.getElementById('mEmoji').textContent = d.emoji;
   document.getElementById('mName').textContent = d.name;
   document.getElementById('mMeta').textContent = `分類：${d.category} ｜ 熱量：${d.cal}`;
+
+  const videoTag = document.getElementById('mVideoTag');
+  const videoWrap = document.getElementById('mVideoWrap');
+  const videoFrame = document.getElementById('mVideoFrame');
+  const hasVideo = d.video && d.video.trim();
+  if(hasVideo){
+    videoFrame.src = d.video.trim();
+    videoTag.style.display = '';
+    videoWrap.style.display = '';
+  } else {
+    videoFrame.src = '';
+    videoTag.style.display = 'none';
+    videoWrap.style.display = 'none';
+  }
+
   document.getElementById('mIngredients').innerHTML = d.ingredients.map(i=>`<span>${i}</span>`).join('');
   document.getElementById('mPrep').innerHTML = stepListHTML(d.prep, d);
   document.getElementById('mCook').innerHTML = stepListHTML(d.cook, d);
   document.getElementById('mQC').innerHTML = d.qc.map(i=>`<li>${i}</li>`).join('');
   modal.classList.add('active');
 }
-document.getElementById('modalClose').addEventListener('click', ()=> modal.classList.remove('active'));
-modal.addEventListener('click', (e)=>{ if(e.target === modal) modal.classList.remove('active'); });
+function closeModal(){
+  modal.classList.remove('active');
+  document.getElementById('mVideoFrame').src = '';  // 關閉彈窗時清空影片網址，讓影片停止播放
+}
+document.getElementById('modalClose').addEventListener('click', closeModal);
+modal.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
 
 // ---- 崗位 SOP 詳細彈窗（點崗位卡片跳出時間表、製作要領、注意事項） ----
 const flowModal = document.getElementById('flowModal');
@@ -863,7 +892,7 @@ flowModal.addEventListener('click', (e) => { if(e.target === flowModal) flowModa
 
 document.addEventListener('keydown', (e)=>{
   if(e.key !== 'Escape') return;
-  modal.classList.remove('active');
+  closeModal();
   flowModal.classList.remove('active');
 });
 
