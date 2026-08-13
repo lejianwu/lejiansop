@@ -418,13 +418,7 @@ document.getElementById('storeLogout').addEventListener('click', () => {
       </div>
     </div>
 
-    <span class="modal-tag" id="fmStepsTag" style="display:none;">標準作業流程</span>
-    <div class="flow-table-wrap" id="fmStepsWrap" style="display:none;">
-      <table class="flow-table">
-        <thead><tr><th>步驟</th><th>時間點</th><th>說明</th><th>注意事項</th><th>檢核</th></tr></thead>
-        <tbody id="fmStepsBody"></tbody>
-      </table>
-    </div>
+    <div id="fmSections"></div>
 
     <span class="modal-tag" id="fmPrepTag" style="display:none;">製作要領</span>
     <ul class="flow-list" id="fmPrepList" style="display:none;"></ul>
@@ -690,17 +684,35 @@ function rowsToDishes(rows){
 // 「流程總覽」列轉成畫面用的物件，依 order 欄位排序
 // 步驟時間／步驟說明／步驟注意事項 三欄用「｜」分隔，第 N 個時間對應第 N 個說明、第 N 個注意事項，
 // 湊成一整排「標準作業流程」表格；製作要領／綜合注意事項則是各自獨立的條列清單
+function stepsFromCols(timeStr, descStr, noteStr){
+  const stepTimes = splitFieldKeep(timeStr);
+  const stepDescs = splitFieldKeep(descStr);
+  const stepNotes = splitFieldKeep(noteStr);
+  const stepCount = Math.max(stepTimes.length, stepDescs.length, stepNotes.length);
+  const steps = [];
+  for(let i = 0; i < stepCount; i++){
+    steps.push({ time: stepTimes[i] || '', desc: stepDescs[i] || '', note: stepNotes[i] || '' });
+  }
+  return steps;
+}
+
 function rowsToFlow(rows){
   return rows
     .map(r => {
-      const stepTimes = splitFieldKeep(r['步驟時間']);
-      const stepDescs = splitFieldKeep(r['步驟說明']);
-      const stepNotes = splitFieldKeep(r['步驟注意事項']);
-      const stepCount = Math.max(stepTimes.length, stepDescs.length, stepNotes.length);
-      const steps = [];
-      for(let i = 0; i < stepCount; i++){
-        steps.push({ time: stepTimes[i] || '', desc: stepDescs[i] || '', note: stepNotes[i] || '' });
+      // 段落1：沿用原本的「步驟時間／步驟說明／步驟注意事項」三欄（例如開店流程）
+      const section1Steps = stepsFromCols(r['步驟時間'], r['步驟說明'], r['步驟注意事項']);
+      const sections = [];
+      if(section1Steps.length){
+        sections.push({ name: r['段落1名稱'] || '標準作業流程', steps: section1Steps });
       }
+      // 段落2～4：額外的流程段落（例如出餐、收銀、閉店），欄位命名為「段落N名稱／段落N步驟時間／…」
+      [2, 3, 4].forEach(n => {
+        const name = r['段落' + n + '名稱'];
+        const steps = stepsFromCols(r['段落' + n + '步驟時間'], r['段落' + n + '步驟說明'], r['段落' + n + '步驟注意事項']);
+        if(name && steps.length){
+          sections.push({ name, steps });
+        }
+      });
       return {
         order: Number(r['順序']) || 0,
         title: r['標題'] || '',
@@ -709,7 +721,7 @@ function rowsToFlow(rows){
         image: r['圖片網址'] || '',
         bg: r['主題色底'] || 'eaf4ec',
         fg: r['主題色字'] || '2f5d3a',
-        steps,
+        sections,
         prepNotes: splitField(r['製作要領']),
         warnings: splitField(r['綜合注意事項'])
       };
@@ -888,21 +900,29 @@ function openFlowModal(f){
   document.getElementById('fmTitle').textContent = f.title;
   document.getElementById('fmDesc').textContent = f.desc;
 
-  const stepsTag = document.getElementById('fmStepsTag');
-  const stepsWrap = document.getElementById('fmStepsWrap');
-  const stepsBody = document.getElementById('fmStepsBody');
-  const hasSteps = f.steps && f.steps.length;
-  stepsBody.innerHTML = hasSteps ? f.steps.map((s, i) => `
-    <tr>
-      <td>${i + 1}</td>
-      <td>${s.time || ''}</td>
-      <td>${s.desc || ''}</td>
-      <td>${s.note || ''}</td>
-      <td class="step-check">☐</td>
-    </tr>
-  `).join('') : '';
-  stepsTag.style.display = hasSteps ? '' : 'none';
-  stepsWrap.style.display = hasSteps ? '' : 'none';
+  const sectionsBox = document.getElementById('fmSections');
+  // 相容舊版只有單一 steps 陣列的資料（例如 FALLBACK_FLOW 內建示範資料）
+  const sections = (f.sections && f.sections.length) ? f.sections
+    : (f.steps && f.steps.length) ? [{ name: '標準作業流程', steps: f.steps }] : [];
+  sectionsBox.innerHTML = sections.map(sec => {
+    const hasTime = sec.steps.some(s => s.time);
+    return `
+    <span class="modal-tag">${sec.name}</span>
+    <div class="flow-table-wrap">
+      <table class="flow-table">
+        <thead><tr><th>步驟</th>${hasTime ? '<th>時間點</th>' : ''}<th>說明</th><th>注意事項</th><th>檢核</th></tr></thead>
+        <tbody>${sec.steps.map((s, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            ${hasTime ? `<td>${s.time || ''}</td>` : ''}
+            <td>${s.desc || ''}</td>
+            <td>${s.note || ''}</td>
+            <td class="step-check">☐</td>
+          </tr>
+        `).join('')}</tbody>
+      </table>
+    </div>`;
+  }).join('');
 
   const prepTag = document.getElementById('fmPrepTag');
   const prepList = document.getElementById('fmPrepList');
