@@ -70,7 +70,8 @@
 
   /* Quality badges */
   .quality{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-top:56px;}
-  .badge{text-align:center;width:150px;}
+  .badge{text-align:center;width:150px;cursor:pointer;transition:transform .15s;}
+  .badge:hover{transform:translateY(-3px);}
   .badge .circle{width:76px;height:76px;border-radius:50%;background:#fff;border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px;}
   .badge span{font-size:13.5px;font-weight:700;color:var(--green-dark);}
 
@@ -346,12 +347,7 @@ document.getElementById('storeLogout').addEventListener('click', () => {
       <p>櫃台、主餐、打菜打飯、烤台，每個崗位都有各自的標準作業流程，確保出餐效率、品質與衛生一致。</p>
     </div>
     <div class="sop-grid" id="flowGrid"></div>
-    <div class="quality">
-      <div class="badge"><div class="circle">✅</div><span>食品安全認證</span></div>
-      <div class="badge"><div class="circle">🌡️</div><span>全程溫控紀錄</span></div>
-      <div class="badge"><div class="circle">📑</div><span>可追溯食材來源</span></div>
-      <div class="badge"><div class="circle">🔁</div><span>定期稽核複盤</span></div>
-    </div>
+    <div class="quality" id="qualityGrid"></div>
   </div>
 </section>
 
@@ -467,6 +463,34 @@ const FALLBACK_FLOW = [
   { order: 2, title: "主餐", desc: "負責主餐蛋白質料理的烹調與火候掌控，依標準食譜卡執行醃製、烹調時間與溫度，確保每份主餐口味與熟度一致。", icon: "🍗", image: "", bg: "fdf1df", fg: "8b5a2b", steps: [], prepNotes: [], warnings: [] },
   { order: 3, title: "打菜打飯", desc: "負責白飯與配菜的秤重分裝，依標準份量控管每份餐盒的飯量與配菜比例，確保擺盤一致、熱量標示準確。", icon: "🍚", image: "", bg: "dff0e2", fg: "2f5d3a", steps: [], prepNotes: [], warnings: [] },
   { order: 4, title: "烤台", desc: "負責烤台區的食材烘烤作業，依溫度與時間標準執行，並定期清潔烤台，維持食品安全與烘烤品質穩定。", icon: "🔥", image: "", bg: "fbe8df", fg: "d9633b", steps: [], prepNotes: [], warnings: [] }
+];
+
+const FALLBACK_QUICK = [
+  { order: 1, title: "洗雞胸", desc: "", icon: "🍗", image: "", bg: "fdf1df", fg: "8b5a2b",
+    steps: [
+      { time: "", desc: "先把洗手槽徹底洗淨", note: "" },
+      { time: "", desc: "雞胸倒入洗手槽後清洗兩次", note: "" },
+      { time: "", desc: "裝入漏水桶", note: "" }
+    ], prepNotes: [], warnings: [] },
+  { order: 2, title: "洗菜", desc: "", icon: "🥬", image: "", bg: "dff0e2", fg: "2f5d3a",
+    steps: [
+      { time: "", desc: "先將洗手槽徹底洗盡", note: "" },
+      { time: "", desc: "將切好的青菜倒入", note: "" },
+      { time: "", desc: "至少清洗三次(三槽水)，等泥沙沉澱後再撈入另一槽", note: "洗菜過程中注意有無異物、老掉菜葉、菜蟲" }
+    ], prepNotes: [], warnings: [] },
+  { order: 3, title: "蒸地瓜", desc: "", icon: "🍠", image: "", bg: "fbe8df", fg: "d9633b",
+    steps: [
+      { time: "", desc: "地瓜倒入蒸籠中", note: "" },
+      { time: "", desc: "中火蒸35分鐘", note: "" },
+      { time: "", desc: "出鍋前拿筷子戳入確認有沒有熟", note: "" }
+    ], prepNotes: [], warnings: [] },
+  { order: 4, title: "蒸蛋", desc: "", icon: "🥚", image: "", bg: "f5e8f0", fg: "8b3f6b",
+    steps: [
+      { time: "", desc: "將蛋裝入蒸籠中", note: "" },
+      { time: "", desc: "稍微用清水清洗蛋殼", note: "" },
+      { time: "", desc: "中火蒸35分鐘", note: "" },
+      { time: "", desc: "悶5分鐘開蓋", note: "" }
+    ], prepNotes: [], warnings: [] }
 ];
 
 const FALLBACK_DISHES = [
@@ -740,7 +764,7 @@ async function fetchBackendData(timeoutMs){
     const res = await fetch(CONFIG.DATA_API_URL, { signal: controller.signal, cache: 'no-store' });
     if(!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
-    let dishRows, flowRows = null;
+    let dishRows, flowRows = null, quickRows = null;
     try{
       const json = JSON.parse(text);
       if(Array.isArray(json)){
@@ -748,14 +772,16 @@ async function fetchBackendData(timeoutMs){
       } else {
         dishRows = json.dishes || json.data || [];
         flowRows = json.flow || null;
+        quickRows = json.quick || null;
       }
     }catch(e){
       dishRows = parseCSV(text);
     }
     const dishes = rowsToDishes(dishRows);
     const flow = flowRows ? rowsToFlow(flowRows) : null;
+    const quick = quickRows ? rowsToFlow(quickRows) : null;
     if(!dishes.length) throw new Error('資料是空的');
-    return { dishes, flow: (flow && flow.length) ? flow : null };
+    return { dishes, flow: (flow && flow.length) ? flow : null, quick: (quick && quick.length) ? quick : null };
   } finally {
     clearTimeout(timer);
   }
@@ -769,11 +795,15 @@ function readCache(){
     if(!raw) return null;
     const parsed = JSON.parse(raw);
     if(!parsed || !Array.isArray(parsed.dishes) || !parsed.dishes.length) return null;
-    return { dishes: parsed.dishes, flow: (Array.isArray(parsed.flow) && parsed.flow.length) ? parsed.flow : null };
+    return {
+      dishes: parsed.dishes,
+      flow: (Array.isArray(parsed.flow) && parsed.flow.length) ? parsed.flow : null,
+      quick: (Array.isArray(parsed.quick) && parsed.quick.length) ? parsed.quick : null
+    };
   }catch(e){ return null; }
 }
-function writeCache(dishes, flow){
-  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), dishes, flow })); }catch(e){}
+function writeCache(dishes, flow, quick){
+  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), dishes, flow, quick })); }catch(e){}
 }
 
 const gridMain = document.getElementById('dishGridMain');
@@ -787,6 +817,19 @@ function isSideDish(d){
   return String(d.category || '').includes('配菜');
 }
 const flowGrid = document.getElementById('flowGrid');
+const qualityGrid = document.getElementById('qualityGrid');
+
+// 首頁四個小圖示（例如洗雞胸／洗菜／蒸地瓜／蒸蛋），點下去跟崗位卡片一樣跳出步驟彈窗
+function buildQuickGrid(items){
+  qualityGrid.innerHTML = '';
+  items.forEach(f => {
+    const badge = document.createElement('div');
+    badge.className = 'badge';
+    badge.innerHTML = `<div class="circle">${f.icon}</div><span>${f.title}</span>`;
+    badge.addEventListener('click', () => openFlowModal(f));
+    qualityGrid.appendChild(badge);
+  });
+}
 
 function buildFlowGrid(flow){
   flowGrid.innerHTML = '';
@@ -957,6 +1000,7 @@ document.addEventListener('keydown', (e)=>{
 async function init(){
   const note = document.getElementById('dataSourceNote');
   buildFlowGrid(FALLBACK_FLOW); // 先顯示預設六大流程，避免畫面空白
+  buildQuickGrid(FALLBACK_QUICK); // 先顯示預設四個小圖示，避免畫面空白
 
   if(!CONFIG.DATA_API_URL){
     note.textContent = '目前顯示內建示範資料（尚未連接後台）';
@@ -968,6 +1012,7 @@ async function init(){
   if(cached){
     buildGrid(cached.dishes);
     if(cached.flow) buildFlowGrid(cached.flow);
+    if(cached.quick) buildQuickGrid(cached.quick);
     note.textContent = '顯示快取資料，背景更新中…';
   } else {
     buildSkeleton(6);
@@ -976,9 +1021,10 @@ async function init(){
 
   try{
     const fresh = await fetchBackendData(6000);
-    writeCache(fresh.dishes, fresh.flow);
+    writeCache(fresh.dishes, fresh.flow, fresh.quick);
     buildGrid(fresh.dishes);
     buildFlowGrid(fresh.flow || FALLBACK_FLOW);
+    buildQuickGrid(fresh.quick || FALLBACK_QUICK);
     note.textContent = '資料已從後台同步（共 ' + fresh.dishes.length + ' 道菜' + (fresh.flow ? '，流程總覽已同步' : '') + '）';
   }catch(err){
     console.warn('讀取後台失敗：', err);
