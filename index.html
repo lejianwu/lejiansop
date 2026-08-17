@@ -124,6 +124,14 @@
   .step-item .step-text{font-size:13.5px;color:var(--text);padding-top:1px;}
   .step-item .step-label{display:block;font-weight:800;color:var(--green-dark);margin-bottom:2px;}
 
+  /* 崗位／快速SOP 的步驟清單（跟菜色備料SOP同一種卡片式列表風格） */
+  .flow-steps-list{list-style:none;margin:0 0 20px;padding:0;}
+  .flow-step-item{background:var(--green-light);border-radius:12px;padding:10px 12px;margin-bottom:10px;}
+  .flow-step-item .step-text{flex:1;}
+  .flow-step-time{display:inline-block;font-size:11.5px;font-weight:800;color:var(--green-dark);background:#fff;border-radius:6px;padding:2px 8px;margin-bottom:5px;}
+  .flow-step-note{margin-top:5px;font-size:12.5px;color:#a8502f;}
+  .flow-step-check{flex-shrink:0;font-size:19px;color:var(--green-dark);align-self:center;}
+
   /* 菜色示範影片 */
   .video-wrap{position:relative;width:100%;padding-top:56.25%;border-radius:16px;overflow:hidden;margin-top:8px;margin-bottom:6px;background:#000;}
   .video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
@@ -642,6 +650,8 @@ const FALLBACK_DISHES = [
 function dishThumb(d){ return (d.image && d.image.trim()) || photo(d.name, d.bg, d.fg, 300, 220); }
 function dishHero(d){ return (d.image && d.image.trim()) || photo(d.name, d.bg, d.fg, 640, 360); }
 function stepImg(s, d){ return (s.img && s.img.trim()) || photo(s.label, d.bg, d.fg, 160, 110); }
+// 崗位／快速SOP 步驟圖片：有上傳就用上傳的，沒有就用跟該卡片同色系的示意佔位圖
+function flowStepImg(s, f){ return (s.img && s.img.trim()) || photo(s.desc || f.title, f.bg, f.fg, 160, 110); }
 
 // ---- 簡易 CSV 解析（支援欄位內含逗號/換行的雙引號格式）----
 function parseCSV(text){
@@ -959,25 +969,22 @@ function openFlowModal(f){
   const sections = (f.sections && f.sections.length) ? f.sections
     : (f.steps && f.steps.length) ? [{ name: '標準作業流程', steps: f.steps }] : [];
   sectionsBox.innerHTML = sections.map(sec => {
-    const hasTime = sec.steps.some(s => s.time);
-    const hasImg = sec.steps.some(s => s.img && s.img.trim());
     return `
     <span class="modal-tag">${sec.name}</span>
-    <div class="flow-table-wrap">
-      <table class="flow-table">
-        <thead><tr>${hasImg ? '<th>照片</th>' : ''}<th>步驟</th>${hasTime ? '<th>時間點</th>' : ''}<th>說明</th><th>注意事項</th><th>檢核</th></tr></thead>
-        <tbody>${sec.steps.map((s, i) => `
-          <tr>
-            ${hasImg ? `<td>${s.img && s.img.trim() ? `<img src="${s.img.trim()}" alt="${sec.name} 步驟${i + 1} 示意圖" style="width:52px;height:52px;object-fit:cover;border-radius:8px;display:block;">` : ''}</td>` : ''}
-            <td>${i + 1}</td>
-            ${hasTime ? `<td>${s.time || ''}</td>` : ''}
-            <td>${s.desc || ''}</td>
-            <td>${s.note || ''}</td>
-            <td class="step-check">☐</td>
-          </tr>
-        `).join('')}</tbody>
-      </table>
-    </div>`;
+    <ul class="flow-steps-list">
+      ${sec.steps.map((s, i) => `
+        <li class="step-item flow-step-item">
+          <img src="${flowStepImg(s, f)}" alt="${sec.name} 步驟${i + 1} 示意圖">
+          <div class="step-badge">${i + 1}</div>
+          <div class="step-text">
+            ${s.time ? `<span class="flow-step-time">${s.time}</span>` : ''}
+            <div>${s.desc || ''}</div>
+            ${s.note ? `<div class="flow-step-note">⚠ ${s.note}</div>` : ''}
+          </div>
+          <span class="flow-step-check">☐</span>
+        </li>
+      `).join('')}
+    </ul>`;
   }).join('');
 
   const prepTag = document.getElementById('fmPrepTag');
