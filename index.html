@@ -407,6 +407,7 @@ document.getElementById('storeLogout').addEventListener('click', () => {
 <div class="modal-overlay" id="flowModal">
   <div class="modal-box">
     <button class="modal-close" id="flowModalClose">✕</button>
+    <img class="modal-hero" id="fmHero" style="display:none;" src="" alt="">
     <div class="modal-head">
       <div class="emoji" id="fmIcon">🧾</div>
       <div>
@@ -946,6 +947,11 @@ function openFlowModal(f){
   document.getElementById('fmIcon').textContent = f.icon;
   document.getElementById('fmTitle').textContent = f.title;
   document.getElementById('fmDesc').textContent = f.desc;
+
+  const fmHero = document.getElementById('fmHero');
+  const hasImage = f.image && f.image.trim();
+  fmHero.src = hasImage ? f.image.trim() : '';
+  fmHero.style.display = hasImage ? '' : 'none';
 
   const sectionsBox = document.getElementById('fmSections');
   // 相容舊版只有單一 steps 陣列的資料（例如 FALLBACK_FLOW 內建示範資料）
